@@ -34,7 +34,7 @@ def build_equations(reactant_atoms, product_atoms):
     product_coefficients = list(symbols(f'b0:{len(product_atoms)}')) 
     product_coefficients = product_coefficients[:-1] + [1] # Ensure the last coefficient is 1
 
-    ## equations ##
+    
     equations = []
     for element in ELEMENTS:
         lhs = generate_equation_for_element(reactant_atoms, reactant_coefficients, element)
