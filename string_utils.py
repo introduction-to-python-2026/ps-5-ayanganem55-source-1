@@ -1,5 +1,4 @@
 def split_before_each_uppercases(formula):
-
     parts = []
     current_part = ""
 
