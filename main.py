@@ -1,46 +1,63 @@
 
-from string_utils import count_atoms_in_molecule as count_atoms_in_reaction
+from sympy import symbols, Eq, solve as sympy_solve
 
+# רשימת היסודות
+ELEMENTS = [
+    'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca',
+    'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr',
+    'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn',
+    'Sb', 'I', 'Te', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd',
+    'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
+    'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+    'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+    'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm',
+    'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds',
+    'Rg', 'Cn', 'Uut', 'Uuq', 'Uup', 'Uuh', 'Uus', 'Uuo'
+]
 
-from equation_utils import build_equations, my_solve
+def generate_equation_for_element(compounds, coefficients, element):
+    """Generates a symbolic equation for the given element."""
+    equation = 0
+    for i, compound in enumerate(compounds):
+        if element in compound:
+            equation += coefficients[i] * compound[element]
+    return equation
 
-
-def parse_chemical_reaction(reaction_string):
-    """Parses a string like 'A + B -> C + D' into a tuple of (reactants_list, products_list)."""
-    if "->" not in reaction_string:
-        raise ValueError("Reaction string must contain '->'")
+def build_equations(reactant_atoms, product_atoms):
+    """Builds a list of symbolic equations for each element."""
+    ## coefficients ##
+    reactant_coefficients = list(symbols(f'a0:{len(reactant_atoms)}'))
+    product_coefficients = list(symbols(f'b0:{len(product_atoms)}')) 
     
-    parts = reaction_string.split("->")
-    reactants_str = parts[0].strip()
-    products_str = parts[1].strip()
-
-    reactants_list = [c.strip() for c in reactants_str.split("+")]
-    products_list = [c.strip() for c in products_str.split("+")]
-
-    return reactants_list, products_list
-
-
-def balance_reaction(reaction): 
+    product_coefficients = product_coefficients[:-1] + [1] 
 
     
-    
-    reactants, products = parse_chemical_reaction(reaction) 
-    
-    
-    reactant_atoms = [count_atoms_in_reaction(r) for r in reactants] 
-    product_atoms = [count_atoms_in_reaction(p) for p in products]
+    equations = []
+    for element in ELEMENTS:
+        lhs = generate_equation_for_element(reactant_atoms, reactant_coefficients, element)
+        rhs = generate_equation_for_element(product_atoms, product_coefficients, element)
+        if lhs != 0 or rhs != 0:
+            equations.append(Eq(lhs, rhs))
 
-   
-    equations, coefficients = build_equations(reactant_atoms, product_atoms)
-    coefficients = my_solve(equations, coefficients) + [1]
+    # מחזיר את רשימת המשוואות ואת רשימת המקדמים שיש לפתור (ללא המקדם 1)
+    return equations, reactant_coefficients + product_coefficients[:-1]
 
-    return coefficients 
+def my_solve(equations, coefficients):
+    """Solves the system of equations for the coefficients of the reaction."""
+    solution = sympy_solve(equations, coefficients)
 
-
-if __name__ == '__main__':
     
-    reaction_str = "Fe2O3 + H2 -> Fe + H2O"
-    print(f"Balancing reaction: {reaction_str}")
+    if isinstance(solution, dict) and len(solution) == len(coefficients):
+        coefficient_values = []
+        for coefficient in coefficients:
+            
+            coefficient_values.append(float(solution[coefficient]))
+        return coefficient_values
+    
+    # אם הפתרון לא נמצא או שהוא לא בפורמט צפוי (למשל, מערכת לא קבועה), מחזיר רשימה ריקה
+    return []
     
     
 
